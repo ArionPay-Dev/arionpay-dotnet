@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>ArionPay</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Deterministic>true</Deterministic>
+
+    <PackageId>ArionPay</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>ArionPay</Authors>
+    <Company>ArionPay</Company>
+    <Description>Official .NET client for ArionPay crypto payments: create invoices, verify signed webhooks, test in the sandbox. Payments go straight to your own wallet. No dependencies.</Description>
+    <PackageTags>arionpay;crypto;payments;bitcoin;usdt;webhooks;payment-gateway</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://arionpay.com</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ArionPay-Dev/arionpay-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <InternalsVisibleTo Include="ArionPay.Tests" />
+  </ItemGroup>
+
+</Project>
