@@ -1,0 +1,68 @@
+name: Publish to NuGet
+
+# Every push and pull request tests and packs the library.
+# Only a published GitHub release (or a manual run) pushes it to nuget.org,
+# through nuget.org trusted publishing: no API key is stored anywhere.
+# The nuget.org account name comes from the repository variable NUGET_USER.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '8.0.x'
+      - name: Test
+        run: dotnet test tests/ArionPay.Tests -c Release
+      - name: Pack
+        run: dotnet pack src/ArionPay -c Release -o out -p:ContinuousIntegrationBuild=true
+      - name: Release tag must match the package version
+        if: github.event_name == 'release'
+        run: |
+          test -f "out/ArionPay.${GITHUB_REF_NAME#v}.nupkg" || { echo "no out/ArionPay.${GITHUB_REF_NAME#v}.nupkg for tag $GITHUB_REF_NAME"; ls out; exit 1; }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: nupkg
+          path: out/*.nupkg
+          if-no-files-found: error
+
+  publish:
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: nuget
+      url: https://www.nuget.org/packages/ArionPay
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: nupkg
+          path: out
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '8.0.x'
+      - name: Get a short-lived nuget.org key
+        id: login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: ${{ vars.NUGET_USER }}
+      - name: Push to nuget.org
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: dotnet nuget push out/*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json
